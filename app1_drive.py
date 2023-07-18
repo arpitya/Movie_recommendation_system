@@ -2,6 +2,32 @@ import streamlit as st
 import pandas as pd
 import pickle
 import requests
+import gdown
+import os
+
+# Function to download the similarity.pkl file from the Google Drive link
+def download_similarity_file():
+    url = "https://drive.google.com/uc?id=1qipLpH7FtL0dyeaV44WHqKv2tzJUzL8d"
+    output_path = "similarity.pkl"
+    gdown.download(url, output_path, quiet=False)
+
+# Check if similarity.pkl exists locally, if not, download it
+if not os.path.isfile('similarity.pkl'):
+    download_similarity_file()
+
+st.header('Movie Recommender System')
+
+# Convert the dictionary to a DataFrame
+movies = pd.DataFrame.from_dict(pickle.load(open('movies_dict.pkl', 'rb')))
+
+# Load the similarity data from the downloaded file
+similarity = pickle.load(open('similarity.pkl', 'rb'))
+
+movie_list = movies['title'].values
+selected_movie = st.selectbox(
+    "Type or select a movie from the dropdown",
+    movie_list
+)
 
 def fetch_poster(movie_id):
     url = "https://api.themoviedb.org/3/movie/{}?api_key=b2dc8a7e129cd35248f408f7764221c0&language=en-US".format(movie_id)
@@ -23,22 +49,6 @@ def recommend(movie):
         recommended_movie_names.append(movies.iloc[i[0]].title)
 
     return recommended_movie_names, recommended_movie_posters
-
-st.header('Movie Recommender System')
-
-# Load similarity.pkl
-similarity = pickle.load(open('similarity.pkl', 'rb'))
-
-# Fetch movies data from the provided link
-movies_url = "https://drive.google.com/uc?id=1qipLpH7FtL0dyeaV44WHqKv2tzJUzL8d"
-movies_dict = requests.get(movies_url).json()
-movies = pd.DataFrame.from_dict(movies_dict)
-
-movie_list = movies['title'].values
-selected_movie = st.selectbox(
-    "Type or select a movie from the dropdown",
-    movie_list
-)
 
 if st.button('Show Recommendation'):
     recommended_movie_names, recommended_movie_posters = recommend(selected_movie)
